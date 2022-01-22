@@ -6,6 +6,7 @@ use App\Models\Checkout;
 use App\Models\Datadiri;
 use App\Models\Pengalaman;
 use App\Models\Template;
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;
 use PDF;
 
@@ -173,6 +174,8 @@ class CreateController extends Controller
         return redirect()->route('checkout');
     }
 
+    public static $template;
+
     public function storecheck(Request $request)
     {
         $request->validate([
@@ -181,8 +184,10 @@ class CreateController extends Controller
         Checkout::create($request->all());
         $data = Template::all();
         foreach ($data as $dat) {
-        }
-        return redirect()->route($dat->nama_template);
+        };
+        self::$template = $dat->nama_template;
+        $request->session()->push('template', self::$template);
+        return redirect()->route('download-template');
     }
     // public function totemplate()
     // {
@@ -234,6 +239,18 @@ class CreateController extends Controller
     public function destroy($id)
     {
         //
+    }
+    public function downloadTemplate(Request $request)
+    {
+        $nama_tmpt = $request->session()->get('template')[0];
+        dd($nama_tmpt);
+        $data1 = Datadiri::all();
+        $data2 = Pengalaman::all();
+        foreach ($data1 as $dat) {
+        }
+
+        $pdf = PDF::loadView('template.' . $nama_tmpt, compact('data1', 'data2'))->setPaper('a4');
+        return $pdf->download('CV - ' . $dat->nama_depan . ' ' . $dat->nama_belakang . '.pdf');
     }
     public function template_flat()
     {
